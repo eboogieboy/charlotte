@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#172339">
+  <meta name="description" content="Charlotte's own film watchlist, surprise movie picker and personal review diary.">
+  <title>Charlotte's Film Diary</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="topline"><div class="shell topline-inner"><span class="topline-mark">C<span class="star">✦</span></span><span>CHARLOTTE'S FILM DIARY</span><span class="topline-right">YOUR VERY OWN LITTLE CINEMA</span></div></div>
+  <header class="hero">
+    <div class="shell hero-grid">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="glow-dot"></span> YOUR FILMS · YOUR RATINGS · YOUR WAY</div>
+        <h1>Life's too short<br>for <em>bad movie nights.</em></h1>
+        <p>Pick the films you want to see. Once you've chosen ten, we'll pick one for you. Watch it, rate it, review it — and let the next movie night find you.</p>
+        <div class="hero-actions"><a href="#addFilm" class="button light">+ Add a film <span aria-hidden="true">↗</span></a><a href="#yourFilms" class="text-link">Explore your watchlist <span aria-hidden="true">→</span></a></div>
+      </div>
+      <div class="hero-art" aria-hidden="true"><div class="poster-back poster-back-one"></div><div class="poster-back poster-back-two"></div><div class="ticket"><div class="ticket-label">PRIVATE SCREENING</div><div class="ticket-c">C<span>✦</span></div><div class="ticket-bottom"><span>THE FILM DIARY</span><span>EST. 2026</span></div></div></div>
+    </div>
+  </header>
+  <main class="shell main-content">
+    <div class="metric-grid" id="metrics" aria-label="Your film diary at a glance">
+      <div class="metric"><span>FILMS IN THE HAT</span><strong id="queuedCount">0 <small>/ 20</small></strong><div class="meter"><span id="queueMeter"></span></div></div>
+      <div class="metric"><span>FILMS WATCHED</span><strong id="watchedCount">0</strong><small>Every review, one for the books.</small></div>
+      <div class="metric"><span>YOUR AVERAGE RATING</span><strong id="averageRating">—</strong><small>Out of a perfect 10.</small></div>
+      <div class="metric"><span>YOUR FILM PICKER</span><strong id="pickerStatus" class="status-value">Warming up</strong><small id="pickerNote">Ten picks unlock the magic.</small></div>
+    </div>
+    <nav class="anchor-nav" aria-label="Sections"><a href="#movieNight">Movie night</a><a href="#addFilm">Add films</a><a href="#yourFilms">Watchlist</a><a href="#diary">Your reviews</a></nav>
+
+    <section id="movieNight" class="panel feature-panel">
+      <div class="heading-row"><div><div class="kicker">01 / THE MAIN EVENT</div><h2>Tonight's <em>pick.</em></h2></div><div class="pill">ONE FILM AT A TIME</div></div>
+      <div id="movieNightContent" aria-live="polite"></div>
+    </section>
+
+    <section id="addFilm" class="panel add-panel">
+      <div class="heading-row"><div><div class="kicker">02 / BUILD YOUR WATCHLIST</div><h2>What shall we <em>watch?</em></h2></div><span class="tiny-note">A maximum of 20 unwatched picks at once.</span></div>
+      <p class="help-copy">Start with ten to switch on the picker, then keep adding whenever inspiration strikes. New films join the mix automatically.</p>
+      <div class="search-group">
+        <label for="searchInput">SEARCH FOR A FILM</label>
+        <div class="search-line"><input id="searchInput" type="search" placeholder="Try Little Women, Interstellar, The Devil Wears Prada…" autocomplete="off"><button class="button dark" id="searchButton" type="button">Find films <span aria-hidden="true">→</span></button></div>
+        <div id="searchResults" class="search-results" aria-live="polite"></div>
+      </div>
+      <div class="manual-toggle"><span>Can't find your film?</span> <button type="button" class="link-button" id="toggleManual">Add it yourself instead →</button></div>
+      <form id="manualForm" class="manual-form hidden"><label>FILM TITLE <input name="title" required maxlength="180" placeholder="Film title"></label><label>RELEASE YEAR <input name="year" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="Optional"></label><button class="button dark" type="submit">Add to my watchlist</button></form>
+      <p id="toast" class="feedback" role="status" aria-live="polite"></p>
+    </section>
+
+    <section id="yourFilms" class="panel list-panel">
+      <div class="heading-row"><div><div class="kicker">03 / COMING SOON</div><h2>The watchlist<span class="heading-dot">.</span></h2></div><div class="pill" id="watchlistPill">0 IN THE MIX</div></div>
+      <div id="watchlistGrid" class="film-grid"></div>
+    </section>
+
+    <section id="diary" class="panel diary-panel">
+      <div class="heading-row"><div><div class="kicker">04 / THE FINAL VERDICT</div><h2>Watched & <em>reviewed.</em></h2></div><label class="sort-label">SORT <select id="reviewSort"><option value="recent">Newest first</option><option value="rating">Highest rated</option><option value="oldest">Oldest first</option></select></label></div>
+      <div id="reviewGrid" class="review-grid"></div>
+    </section>
+
+    <section class="sync-panel" aria-label="Sync your film diary across devices">
+      <div class="sync-copy"><div class="kicker">05 / KEEP YOUR DIARY SAFE</div><h2>Your films, wherever you are.</h2><p id="syncDetail">Connect cloud storage to keep your film picks and reviews in sync across devices.</p><div class="sync-indicator"><span id="syncDot" class="sync-dot"></span><strong id="syncStatus" role="status" aria-live="polite">Checking sync…</strong></div></div>
+      <form id="syncForm" class="sync-signin hidden"><label for="syncEmail">EMAIL FOR YOUR PRIVATE FILM DIARY</label><div class="search-line"><input id="syncEmail" type="email" autocomplete="email" required placeholder="you@example.com"><button class="button dark" type="submit">Send sign-in link</button></div><small>You’ll receive a private sign-in link. Use the same email on each device.</small></form>
+      <button id="syncSignOut" class="button subtle hidden" type="button">Sign out of cloud sync</button>
+    </section>
+
+    <section class="data-panel" aria-label="Your saved film diary"><div><h3>Your diary, your keepsake.</h3><p>You can export a backup at any time. When cloud syncing is connected, Charlotte’s film picks and reviews are also available on her other signed-in devices.</p></div><div class="data-actions"><button id="exportBtn" class="button subtle" type="button">↓ Export backup</button><button id="importBtn" class="button subtle" type="button">↑ Import backup</button><input id="importFile" type="file" accept="application/json,.json" class="hidden" aria-label="Choose a film diary backup"></div></section>
+  </main>
+  <footer class="footer shell"><span>MADE FOR CHARLOTTE <span class="footer-star">✦</span></span><small>Movie information and posters: <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB.</small></footer>
+
+  <dialog id="reviewDialog" class="review-dialog" aria-labelledby="reviewTitle"><form id="reviewForm"><div class="dialog-top"><div><div class="kicker">THE FINAL VERDICT</div><h2 id="reviewTitle">How was it?</h2></div><button class="close-btn" id="closeReview" type="button" aria-label="Close review">×</button></div><p id="reviewFilmName" class="dialog-film"></p><label class="form-label" for="ratingInput">YOUR RATING <span>(1–10)</span></label><div class="rating-line"><input id="ratingInput" type="range" min="1" max="10" step="1" value="7"><output id="ratingOutput" for="ratingInput">7/10</output></div><label class="form-label" for="reviewText">YOUR QUICK REVIEW</label><textarea id="reviewText" rows="5" maxlength="500" required placeholder="What did you love? Would you recommend it? What will you remember?"></textarea><div class="dialog-actions"><button type="button" id="cancelReview" class="button subtle">Not yet</button><button type="submit" class="button dark">Save review & pick the next →</button></div><p id="reviewError" class="feedback" role="alert"></p></form></dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="config.js" defer></script>
+  <script src="core.js" defer></script>
+  <script src="sync.js" defer></script>
+  <script src="app.js" defer></script>
+</body>
+</html>
