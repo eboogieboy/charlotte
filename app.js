@@ -13,10 +13,60 @@
   let db = null;
   try { if (window.supabase) db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY); }
   catch (error) { console.warn('Film search could not be started:', error); }
-  let state;
-  try { state = C.normaliseState(JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')); }
-  catch (_) { state = C.fresh(); }
-  state = C.pickNext(state);
+  // Keep redundant copies, but never replace unreadable saved data with an empty diary.
+  const BACKUP_KEY = STORAGE_KEY + '-last-good';
+  const PREVIOUS_KEY = STORAGE_KEY + '-previous';
+  const ARCHIVE_KEY = STORAGE_KEY + '-unreadable-archive';
+  function decodeSnapshot(raw) {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.queue) || !Array.isArray(parsed.history)) {
+      throw new Error('Saved film diary has an unexpected format.');
+    }
+    return C.normaliseState(parsed);
+  }
+  function initialDiary() {
+    let primary, backup, previous;
+    try {
+      primary = localStorage.getItem(STORAGE_KEY);
+      backup = localStorage.getItem(BACKUP_KEY);
+      previous = localStorage.getItem(PREVIOUS_KEY);
+    } catch (error) {
+      return { state: C.fresh(), locked: true, message: 'Browser storage is unavailable. Do not add films here: they cannot be saved.' };
+    }
+    if (primary !== null) {
+      try { return { state: decodeSnapshot(primary), locked: false, message: '' }; }
+      catch (error) {
+        for (const copy of [backup, previous]) {
+          if (!copy) continue;
+          try {
+            return {
+              state: decodeSnapshot(copy),
+              locked: true,
+              message: 'A local safety copy was found, but the main saved diary is unreadable. Your films are shown below. Export a backup, then import that file to repair your save. Do not clear this site’s data.'
+            };
+          } catch (_) { /* check another recovery copy */ }
+        }
+        return {
+          state: C.fresh(), locked: true,
+          message: 'Saved diary data is unreadable. It has NOT been replaced. Do not clear site data or add films; the original data may still be recoverable.'
+        };
+      }
+    }
+    for (const copy of [backup, previous]) {
+      if (!copy) continue;
+      try {
+        return {
+          state: decodeSnapshot(copy), locked: false,
+          message: 'Your diary was recovered from a local safety copy. Export a backup now for safekeeping.'
+        };
+      } catch (_) { /* check another recovery copy */ }
+    }
+    return { state: C.fresh(), locked: false, message: '' };
+  }
+  const initial = initialDiary();
+  let state = C.pickNext(initial.state);
+  let storageLocked = initial.locked;
+  let storageIssue = initial.message;
   let queryToken = 0;
   let timer = null;
   let editingId = null;
@@ -34,10 +84,46 @@
     node.className = 'feedback' + (error ? ' error' : '');
   }
   function persist() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-    catch (_) { toast('This browser could not save your diary. Try exporting a backup.', true); }
+    if (storageLocked) throw new Error('Existing saved data needs attention. Export a backup before making changes.');
+    const encoded = JSON.stringify(state);
+    try {
+      const old = localStorage.getItem(STORAGE_KEY);
+      // Preserve a known-good copy before changing the primary record.
+      if (old !== null && old !== encoded) {
+        try { decodeSnapshot(old); }
+        catch (_) { storageLocked = true; throw new Error('Existing saved data is unreadable. Nothing has been overwritten.'); }
+        localStorage.setItem(PREVIOUS_KEY, old);
+      }
+      localStorage.setItem(STORAGE_KEY, encoded);
+      if (localStorage.getItem(STORAGE_KEY) !== encoded) throw new Error('Save verification failed.');
+      try { localStorage.setItem(BACKUP_KEY, encoded); }
+      catch (error) { console.warn('Could not write the additional local backup:', error); }
+      return true;
+    } catch (error) {
+      throw new Error('The phone could not save your film diary. ' + (error.message || 'Please export a backup.'));
+    }
   }
-  function commit(next) { state = next; persist(); render(); if (cloud) cloud.changed(); }
+  function commit(next) {
+    const earlier = state;
+    state = next;
+    try { persist(); }
+    catch (error) { state = earlier; render(); throw error; }
+    render();
+    if (cloud) cloud.changed();
+  }
+  function renderStorageWarning() {
+    if (!storageIssue) return;
+    const banner = node('aside','storage-warning');
+    banner.setAttribute('role','alert');
+    banner.append(node('strong','','Film diary storage notice'),node('p','',storageIssue));
+    if (state.queue.length || state.history.length) {
+      const backup = node('button','button dark','Export a safety backup');
+      backup.type = 'button';
+      backup.addEventListener('click', () => $('exportBtn').click());
+      banner.append(backup);
+    }
+    document.querySelector('main').prepend(banner);
+  }
   function node(tag, className, content) {
     const item = document.createElement(tag);
     if (className) item.className = className;
@@ -162,8 +248,8 @@
     try {
       const next = editingId ? C.editReview(state,editingId,score,review) : C.finishCurrent(state,score,review);
       const edited = Boolean(editingId);
-      closeReview();
       commit(next);
+      closeReview();
       toast(edited ? 'Review updated.' : 'Review saved — your next film is ready!');
       if (!edited) $('movieNight').scrollIntoView({ behavior:'smooth' });
     } catch(e) { $('reviewError').textContent = e.message; }
@@ -249,7 +335,17 @@
       const payload = JSON.parse(await file.text());
       if (payload.app !== 'charlottes-film-diary' || !payload.state || !Array.isArray(payload.state.queue) || !Array.isArray(payload.state.history)) throw new Error('This does not look like a Charlotte’s Film Diary backup.');
       if (!window.confirm('Import this backup? It will replace the films and reviews currently saved in this browser.')) return;
+      // Import is an explicit repair action. First preserve any unreadable original bytes.
+      if (storageLocked) {
+        try {
+          const unreadable = localStorage.getItem(STORAGE_KEY);
+          if (unreadable !== null) localStorage.setItem(ARCHIVE_KEY, unreadable);
+          storageLocked = false;
+        } catch (error) { throw new Error('Cannot repair this browser’s storage. No data was overwritten.'); }
+      }
       commit(C.pickNext(C.normaliseState(payload.state)));
+      document.querySelector('.storage-warning')?.remove();
+      storageIssue = '';
       toast('Backup imported. Your diary is ready.');
     } catch(e) {toast(e.message || 'Could not read that backup.',true);}
   });
@@ -285,6 +381,8 @@
     try { await cloud.signOut(); toast('Signed out of cloud sync. Your local film diary stays on this device.'); }
     catch (error) {toast(error.message || 'Could not sign out.', true);}
   });
-  persist(); render();
+  // Never save on startup: an unreadable record must not be replaced by a blank state.
+  render();
+  renderStorageWarning();
   if (cloud) { cloud.start(); }
 })();
