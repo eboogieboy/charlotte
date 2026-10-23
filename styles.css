@@ -29,3 +29,8 @@
 .sync-signin button {flex-shrink:0}.sync-signin small {display:block;color:#657180;font-size:.76rem;line-height:1.5;margin-top:8px}
 .sync-panel>.button {justify-self:end}
 @media (max-width:780px){.sync-panel{grid-template-columns:1fr;padding:22px 19px}.sync-panel>.button{justify-self:start}.sync-signin .search-line{flex-wrap:wrap}.sync-signin button{width:100%}}
+/* Persistent safety notice for unreadable or recovered local film data. */
+.storage-warning{margin:0 0 20px;padding:18px 20px;background:#fff4e7;border:1px solid #c88c57;border-radius:14px;color:#553b25}
+.storage-warning strong{display:block;font-weight:850;font-size:1rem}
+.storage-warning p{margin:7px 0 12px;line-height:1.55}
+.storage-warning .button{display:inline-flex;max-width:100%;justify-content:center}
