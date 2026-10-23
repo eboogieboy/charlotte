@@ -339,7 +339,11 @@
       if (storageLocked) {
         try {
           const unreadable = localStorage.getItem(STORAGE_KEY);
-          if (unreadable !== null) localStorage.setItem(ARCHIVE_KEY, unreadable);
+          if (unreadable !== null) {
+            // Store the unreadable record untouched before an explicitly approved import.
+            localStorage.setItem(ARCHIVE_KEY, unreadable);
+            localStorage.removeItem(STORAGE_KEY);
+          }
           storageLocked = false;
         } catch (error) { throw new Error('Cannot repair this browser’s storage. No data was overwritten.'); }
       }
